@@ -3,17 +3,16 @@ package com.lendora.users.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lendora.users.component.InternalAuthValidator;
 import com.lendora.users.dto.ChangePasswordRequest;
 import com.lendora.users.dto.UpsertUserRequest;
 import com.lendora.users.dto.UserAuthDTO;
@@ -27,14 +26,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService service;
-    private final InternalAuthValidator internalAuth;
-
-    // ------- Interno para Auth (Auth -> Users) -------
+    
     @GetMapping("/auth/{username}")
-    public ResponseEntity<UserAuthDTO> getAuthByUsername(
-        @PathVariable String username,
-        @RequestHeader("X-Internal-Auth") String internalHeader) {
-        internalAuth.check(internalHeader);                 // valida secreto interno
+    @PreAuthorize("hasAuthority('SCOPE_users.read_auth')")
+    public ResponseEntity<UserAuthDTO> getAuthByUsername(@PathVariable String username) {
         return ResponseEntity.ok(service.getAuthByUsername(username));
     }
 

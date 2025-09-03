@@ -38,12 +38,22 @@ management:
     health:
       probes:
         enabled: true
+
 lendora:
+  m2m:
+    issuer: auth             # debe igualar el 'iss' que emite Auth
+    audience: users-ms       # debe igualar el 'aud' que envia Auth
+    required-scopes:
+        users.read_auth
   services:
     auth:
       internal:
         secret: ${INTERNAL_AUTH_SECRET}
   security:
+    internal:
+      issuer: ${INTERNAL_ISS}
+      audience: ${USERS_AUD}
+      required-scopes: ${USERS_SCOPES_REQUIRED}
     login:
       threshold: ${APP_LOGIN_THRESHOLD:5}
       window:

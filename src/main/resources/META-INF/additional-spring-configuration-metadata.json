@@ -38,5 +38,35 @@
     "name": "lendora.security.oauth2.resourceserver.jwt.jwk-set-uri",
     "type": "java.lang.String",
     "description": "A description for 'lendora.security.oauth2.resourceserver.jwt.jwk-set-uri'"
+  },
+  {
+    "name": "lendora.security.internal.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.internal.issuer'"
+  },
+  {
+    "name": "lendora.security.internal.audience",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.internal.audience'"
+  },
+  {
+    "name": "lendora.security.internal.required-scopes",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.internal.required-scopes'"
+  },
+  {
+    "name": "lendora.m2m.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.m2m.issuer'"
+  },
+  {
+    "name": "lendora.m2m.audience",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.m2m.audience'"
+  },
+  {
+    "name": "lendora.m2m.required-scopes",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.m2m.required-scopes'"
   }
 ]}
