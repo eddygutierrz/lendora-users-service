@@ -1,39 +1,42 @@
-{
-    "properties": [
-      {
-        "name": "lendora.security.jwt.secret",
-        "type": "java.lang.String",
-        "description": "JWT secret key (Base64 encoded)"
-      },
-      {
-        "name": "lendora.security.jwt.expiration-ms",
-        "type": "java.lang.Long",
-        "description": "JWT expiration time in milliseconds"
-      },
-      {
-        "name": "lendora.security.login.threshold",
-        "type": "java.lang.Integer",
-        "description": "Max login attempts before triggering lockout"
-      },
-      {
-        "name": "lendora.security.login.window.minutes",
-        "type": "java.lang.Integer",
-        "description": "Time window in minutes for counting login attempts"
-      },
-      {
-        "name": "lendora.security.login.lock.minutes",
-        "type": "java.lang.Integer",
-        "description": "Lockout duration in minutes after threshold exceeded"
-      },
-      {
-        "name": "lendora.services.userservice.url",
-        "type": "java.lang.String",
-        "description": "Base URL of the User Service"
-      },
-      {
-        "name": "lendora.services.auth.internal.secret",
-        "type": "java.lang.String",
-        "description": "Internal secret for inter-service authentication"
-      }
-    ]
+{"properties": [
+  {
+    "name": "lendora.security.jwt.secret",
+    "type": "java.lang.String",
+    "description": "JWT secret key (Base64 encoded)"
+  },
+  {
+    "name": "lendora.security.jwt.expiration-ms",
+    "type": "java.lang.Long",
+    "description": "JWT expiration time in milliseconds"
+  },
+  {
+    "name": "lendora.security.login.threshold",
+    "type": "java.lang.Integer",
+    "description": "Max login attempts before triggering lockout"
+  },
+  {
+    "name": "lendora.security.login.window.minutes",
+    "type": "java.lang.Integer",
+    "description": "Time window in minutes for counting login attempts"
+  },
+  {
+    "name": "lendora.security.login.lock.minutes",
+    "type": "java.lang.Integer",
+    "description": "Lockout duration in minutes after threshold exceeded"
+  },
+  {
+    "name": "lendora.services.userservice.url",
+    "type": "java.lang.String",
+    "description": "Base URL of the User Service"
+  },
+  {
+    "name": "lendora.services.auth.internal.secret",
+    "type": "java.lang.String",
+    "description": "Internal secret for inter-service authentication"
+  },
+  {
+    "name": "lendora.security.oauth2.resourceserver.jwt.jwk-set-uri",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.oauth2.resourceserver.jwt.jwk-set-uri'"
   }
+]}
