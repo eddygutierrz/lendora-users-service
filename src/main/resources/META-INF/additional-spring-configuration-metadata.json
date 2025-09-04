@@ -68,5 +68,15 @@
     "name": "lendora.m2m.required-scopes",
     "type": "java.lang.String",
     "description": "A description for 'lendora.m2m.required-scopes'"
+  },
+  {
+    "name": "lendora.security.jwt.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.jwt.issuer'"
+  },
+  {
+    "name": "lendora.security.jwt.expected-audience",
+    "type": "java.lang.String",
+    "description": "A description for 'lendora.security.jwt.expected-audience'"
   }
 ]}

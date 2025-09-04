@@ -15,11 +15,12 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update      # DEV: update; PROD: validate + Flyway
+      ddl-auto: update            # DEV: update; PROD: validate + Flyway
     properties:
       "[hibernate.jdbc.time_zone]": UTC
       "[hibernate.format_sql]": true
       "[hibernate.default_schema]": public
+
   security:
     oauth2:
       resourceserver:
@@ -40,23 +41,12 @@ management:
         enabled: true
 
 lendora:
-  m2m:
-    issuer: auth             # debe igualar el 'iss' que emite Auth
-    audience: users-ms       # debe igualar el 'aud' que envia Auth
-    required-scopes:
-        users.read_auth
-  services:
-    auth:
-      internal:
-        secret: ${INTERNAL_AUTH_SECRET}
   security:
-    internal:
-      issuer: ${INTERNAL_ISS}
-      audience: ${USERS_AUD}
-      required-scopes: ${USERS_SCOPES_REQUIRED}
-    login:
-      threshold: ${APP_LOGIN_THRESHOLD:5}
-      window:
-        minutes: ${APP_LOGIN_WINDOW_MINUTES:15}
-      lock:
-        minutes: ${APP_LOGIN_LOCK_MINUTES:15}
+    jwt:
+      issuer: ${AUTH_ISSUER:http://localhost:8080}   # issuer del ACCESS (y también M2M)
+      expected-audience: users
+
+  m2m:
+    issuer: ${AUTH_ISSUER:http://localhost:8080}     # mismo issuer URL que emite Auth
+    audience: users                                   # debe coincidir con el aud del M2M
+    required-scopes: users.read_auth                  # scope exigido para endpoints internos
