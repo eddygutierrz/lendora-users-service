@@ -50,3 +50,7 @@ lendora:
     issuer: ${AUTH_ISSUER:http://localhost:8080}     # mismo issuer URL que emite Auth
     audience: users-service                          # debe coincidir con el aud del M2M
     required-scopes: users-service.read_auth         # scope exigido para endpoints internos
+
+logging:
+  level:
+    org.springframework.security: DEBUG

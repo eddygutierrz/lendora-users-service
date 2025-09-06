@@ -22,10 +22,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.core.convert.converter.Converter;
 
 @Configuration
 @EnableMethodSecurity
+@Slf4j
 public class SecurityConfig {
     @Value("${lendora.security.jwt.issuer}")
     private String issuer;
@@ -42,7 +45,7 @@ public class SecurityConfig {
            .cors(Customizer.withDefaults())
            .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/users/auth/**").hasAuthority("SCOPE_users.read_auth")
+                .requestMatchers("/users/auth/**").hasAuthority("SCOPE_users-service.read_auth")
                 .anyRequest().authenticated()
            )
            .oauth2ResourceServer(oauth -> oauth

@@ -28,7 +28,7 @@ public class UserController {
     private final UserService service;
     
     @GetMapping("/auth/{username}")
-    @PreAuthorize("hasAuthority('SCOPE_users.read_auth')")
+    @PreAuthorize("hasAuthority('SCOPE_users-service.read_auth')")
     public ResponseEntity<UserAuthDTO> getAuthByUsername(@PathVariable String username) {
         return ResponseEntity.ok(service.getAuthByUsername(username));
     }
