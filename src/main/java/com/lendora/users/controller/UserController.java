@@ -49,6 +49,11 @@ public class UserController {
         return ResponseEntity.ok(service.getByUsername(username));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getById(id));
+    }
+
     @GetMapping
     public ResponseEntity<Page<UserDTO>> list(Pageable pageable) {
         return ResponseEntity.ok(service.list(pageable));

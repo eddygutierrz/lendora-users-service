@@ -111,5 +111,12 @@ public class UserServiceImpl implements UserService {
         repo.save(u);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO getById(Long userId){
+        User u = repo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + userId));
+        return UserMapper.toDTO(u);
+    }
 
 }

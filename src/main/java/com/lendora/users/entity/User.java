@@ -25,7 +25,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "users")
 @Getter @Setter
-public class User extends Auditable {
+public class User {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
