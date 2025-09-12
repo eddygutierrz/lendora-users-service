@@ -26,6 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.lendora.common.exception.AccessDeniedException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,6 +52,7 @@ public class SecurityConfig {
            .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/users/auth/**").hasAuthority("SCOPE_users-service.read_auth")
+                .requestMatchers("/users/roles/resolve-permissions").hasAnyAuthority("SCOPE_users-service.read_auth")
                 .anyRequest().authenticated()
            )
            .oauth2ResourceServer(oauth -> oauth
@@ -58,6 +60,10 @@ public class SecurityConfig {
                      jwt.decoder(jwtDecoder());
                      jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
                })
+           )
+           .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> new AccessDeniedException(""))
+                .accessDeniedHandler((req, res, e) -> new AccessDeniedException(""))
            );
         return http.build();
     }
@@ -92,20 +98,16 @@ public class SecurityConfig {
         scopesConverter.setAuthoritiesClaimName("scope"); // también detecta "scp" automáticamente
 
         return jwt -> {
-            // 1) Authorities de aplicación (roles)
             Collection<GrantedAuthority> authorities = new ArrayList<>();
+            // Lee SOLO el claim "authorities" (trae ROLE_* y permisos finos)
             Object rawAuth = jwt.getClaims().get("authorities");
             if (rawAuth instanceof Collection<?> col) {
                 for (Object o : col) {
-                    if (o != null) {
-                        authorities.add(new SimpleGrantedAuthority(o.toString()));
-                    }
+                    if (o != null) authorities.add(new SimpleGrantedAuthority(o.toString()));
                 }
             }
-
-            // 2) Scopes M2M → SCOPE_*
+            // Suma scopes M2M si aplica
             authorities.addAll(scopesConverter.convert(jwt));
-
             return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
         };
     }
