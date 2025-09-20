@@ -1,0 +1,92 @@
+name: deploy-prod
+
+on:
+  push:
+    branches: [ "prod" ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: lendora-prod
+
+    env:
+      IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-auth-service
+      TAG_LATEST: prod-latest
+      TAG_SHA: prod-${{ github.sha }}
+      GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      
+      - name: Export GHCR creds to env
+        run: |
+            echo "GHCR_USERNAME=${{ secrets.GHCR_USERNAME }}" >> $GITHUB_ENV
+            echo "GHCR_TOKEN=${{ secrets.GHCR_TOKEN }}" >> $GITHUB_ENV
+  
+      - name: Write custom Maven settings.xml (forces PAT use)
+        run: |
+            mkdir -p ~/.m2
+            cat > ~/.m2/settings.xml <<'EOF'
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <servers>
+                <server>
+                  <id>github</id>
+                  <username>${env.GHCR_USERNAME}</username>
+                  <password>${env.GHCR_TOKEN}</password>
+                </server>
+              </servers>
+            </settings>
+            EOF
+  
+
+      - name: Build JAR
+        run: mvn -s ~/.m2/settings.xml -B -DskipTests clean package
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+      
+      - name: Build image (no provenance)
+        env:
+          DOCKER_BUILDKIT: "1"
+        run: |
+          docker build --provenance=false -t $IMAGE_NAME:$TAG_SHA -t $IMAGE_NAME:$TAG_LATEST .
+      
+      - name: Push image (with retry)
+        run: |
+          set -e
+          for t in "$IMAGE_NAME:$TAG_SHA" "$IMAGE_NAME:$TAG_LATEST"; do
+            for i in 1 2 3; do
+              if docker push "$t"; then break; fi
+              echo "retry $i for $t"; sleep 3
+            done
+          done
+
+      - name: Deploy on VPS (pull & up -d auth)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" -p "${{ secrets.GHCR_TOKEN }}"
+            cd /opt/lendora/infra/compose
+            docker compose -f docker-compose.prod.yml --env-file .env.prod pull users
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d users
+            docker compose -f docker-compose.prod.yml --env-file .env.prod ps users
