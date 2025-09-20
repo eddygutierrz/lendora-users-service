@@ -11,7 +11,7 @@ jobs:
     environment: lendora-prod
 
     env:
-      IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-auth-service
+      IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-users-service
       TAG_LATEST: prod-latest
       TAG_SHA: prod-${{ github.sha }}
       GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
