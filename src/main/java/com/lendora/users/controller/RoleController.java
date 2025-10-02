@@ -35,6 +35,12 @@ public class RoleController {
         return service.list(q, pageable);
     }
 
+    @PreAuthorize("hasAuthority('roles.view')")
+    @GetMapping("/all")
+    public java.util.List<RoleDTO> list() {
+        return service.list();
+    }
+
     @GetMapping("/{id}")
     public RoleDTO get(@PathVariable Long id) {
         return service.get(id);
