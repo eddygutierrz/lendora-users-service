@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>com.lendora</groupId>
 			<artifactId>common-web</artifactId>
-			<version>1.0.4</version>
+			<version>1.0.6</version>
 		</dependency>
 		
 		<dependency>

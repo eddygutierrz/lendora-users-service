@@ -35,22 +35,32 @@ public class RoleController {
         return service.list(q, pageable);
     }
 
+    @PreAuthorize("hasAuthority('roles.view')")
+    @GetMapping("/all")
+    public java.util.List<RoleDTO> list() {
+        return service.list();
+    }
+
+    @PreAuthorize("hasAuthority('roles.view')")
     @GetMapping("/{id}")
     public RoleDTO get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('roles.create')")
     public ResponseEntity<RoleDTO> create(@RequestBody UpsertRoleRequest req) {
         return ResponseEntity.ok(service.create(req));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.edit')")
     public RoleDTO update(@PathVariable Long id, @RequestBody UpsertRoleRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.delete')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         service.delete(id);

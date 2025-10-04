@@ -36,6 +36,12 @@ public class RoleService {
     }
 
     @Transactional(readOnly = true)
+    public List<RoleDTO> list() {
+        List<Role> found = roles.findAll();
+        return found.stream().map(RoleMapper::toDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public RoleDTO get(Long id) {
         Role r = roles.findById(id).orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado: " + id));
         return RoleMapper.toDTO(r);

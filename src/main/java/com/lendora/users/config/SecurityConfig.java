@@ -2,6 +2,7 @@ package com.lendora.users.config;
 
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -22,15 +23,22 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import com.lendora.common.exception.AccessDeniedException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lendora.common.api.ApiError;
 
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 @Configuration
 @EnableMethodSecurity
@@ -46,10 +54,13 @@ public class SecurityConfig {
     private String jwksUri;  
     
     @Bean
-    SecurityFilterChain filter(HttpSecurity http) throws Exception {
+    SecurityFilterChain filter(HttpSecurity http,
+                                AccessDeniedHandler denied,
+                                AuthenticationEntryPoint entry) throws Exception {
         http.csrf(csrf -> csrf.disable())
            .cors(Customizer.withDefaults())
            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // ← clave
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/users/auth/**").hasAuthority("SCOPE_users-service.read_auth")
                 .requestMatchers("/users/roles/resolve-permissions").hasAnyAuthority("SCOPE_users-service.read_auth")
@@ -61,10 +72,10 @@ public class SecurityConfig {
                      jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
                })
            )
-           .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> new AccessDeniedException(""))
-                .accessDeniedHandler((req, res, e) -> new AccessDeniedException(""))
-           );
+           .exceptionHandling(e -> e
+                .accessDeniedHandler(denied)         // 403 JSON
+                .authenticationEntryPoint(entry)     // 401 JSON
+            );
         return http.build();
     }
 
@@ -129,4 +140,31 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }
+
+    @Bean
+    AccessDeniedHandler jsonAccessDeniedHandler(ObjectMapper om) {
+        return (req, res, ex) -> {
+        res.setStatus(HttpStatus.FORBIDDEN.value());
+        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        var body = new ApiError(
+            "FORBIDDEN", 403, "Forbidden", "Access denied",
+            req.getRequestURI(), OffsetDateTime.now()
+        );
+        om.writeValue(res.getOutputStream(), body);
+        };
+    }
+
+    @Bean
+    AuthenticationEntryPoint jsonAuthEntryPoint(ObjectMapper om) {
+        return (req, res, ex) -> {
+        res.setStatus(HttpStatus.UNAUTHORIZED.value());
+        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        var body = new ApiError(
+            "UNAUTHORIZED", 401, "Unauthorized", "Authentication required",
+            req.getRequestURI(), OffsetDateTime.now()
+        );
+        om.writeValue(res.getOutputStream(), body);
+        };
+    }
+
 }
