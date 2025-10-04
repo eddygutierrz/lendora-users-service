@@ -1,17 +1,17 @@
 spring:
   application:
     name: lendora-users
-
+  config:
+    import: optional:configtree:/run/secrets/
   datasource:
-    url: jdbc:postgresql://${USERS_DB_HOST}:${USERS_DB_PORT}/${USERS_DB_NAME}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${USERS_DB_NAME}
     username: ${USERS_DB_USER}
-    password: ${USERS_DB_PASS}
+    password: ${users_db_pass}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 300000
       connection-timeout: 20000
-
   jpa:
     open-in-view: false
     hibernate:
