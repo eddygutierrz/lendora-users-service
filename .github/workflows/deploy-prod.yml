@@ -78,7 +78,7 @@ jobs:
             done
           done
 
-      - name: Deploy on VPS (pull & up -d auth)
+      - name: Deploy on VPS (pull & up -d users)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
