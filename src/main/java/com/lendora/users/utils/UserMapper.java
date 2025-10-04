@@ -31,7 +31,8 @@ public final class UserMapper {
         u.getOffice(),
         u.getAccessibleOffices(),
         u.getRoles(),
-        u.getStatus()
+        u.getStatus(),
+        u.getLastLoginAt()
     );
   }
 

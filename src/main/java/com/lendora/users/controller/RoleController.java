@@ -48,16 +48,19 @@ public class RoleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('roles.create')")
     public ResponseEntity<RoleDTO> create(@RequestBody UpsertRoleRequest req) {
         return ResponseEntity.ok(service.create(req));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.edit')")
     public RoleDTO update(@PathVariable Long id, @RequestBody UpsertRoleRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('roles.delete')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         service.delete(id);

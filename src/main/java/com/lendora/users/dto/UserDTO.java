@@ -1,5 +1,6 @@
 package com.lendora.users.dto;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ public record UserDTO(
     String office,
     List<String> accessibleOffices,
     Set<String> roles,
-    UserStatus status
+    UserStatus status,
+    OffsetDateTime lastLoginAt
 ) {
 }
