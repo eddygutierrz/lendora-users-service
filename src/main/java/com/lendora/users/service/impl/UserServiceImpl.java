@@ -1,5 +1,6 @@
 package com.lendora.users.service.impl;
 
+import java.time.OffsetDateTime;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,6 +118,14 @@ public class UserServiceImpl implements UserService {
         User u = repo.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + userId));
         return UserMapper.toDTO(u);
+    }
+
+    @Transactional
+    public void markLogin(String username) {
+        var u = repo.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        u.setLastLoginAt(OffsetDateTime.now());
+        repo.save(u);
     }
 
 }

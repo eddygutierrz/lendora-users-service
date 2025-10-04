@@ -1,5 +1,6 @@
 package com.lendora.users.entity;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,4 +77,7 @@ public class User {
 
   @Column(length = 20)
   private String phone;
+
+  @Column(name = "last_login_at")
+  private OffsetDateTime lastLoginAt;
 }

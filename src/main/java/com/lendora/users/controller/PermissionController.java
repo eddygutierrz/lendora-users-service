@@ -21,13 +21,14 @@ public class PermissionController {
         return ResponseEntity.ok(service.create(dto));
     }
 
-    @PreAuthorize("hasAuthority('permission.view')")
+    @PreAuthorize("hasAuthority('permissions.view')")
     @GetMapping
     public ResponseEntity<Page<PermissionDTO>> list(
             @RequestParam(required = false) String q, Pageable pageable) {
         return ResponseEntity.ok(service.list(q, pageable));
     }
 
+    @PreAuthorize("hasAuthority('permissions.view')")
     @GetMapping("/{id}")
     public ResponseEntity<PermissionDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(service.get(id));
