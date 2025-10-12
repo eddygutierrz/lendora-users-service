@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: lendora-users
+  
+  datasource:
+    url: jdbc:postgresql://${USERS_DB_HOST}:${USERS_DB_PORT}/${USERS_DB_NAME}
+    username: ${USERS_DB_USER}
+    password: ${USERS_DB_PASS}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 300000
+      connection-timeout: 20000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update            # DEV: update; PROD: validate + Flyway
+    properties:
+      "[hibernate.jdbc.time_zone]": UTC
+      "[hibernate.format_sql]": true
+      "[hibernate.default_schema]": public
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${AUTH_JWKS_URI}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+lendora:
+  security:
+    jwt:
+      issuer: ${AUTH_ISSUER:http://localhost:8080}   # issuer del ACCESS (y también M2M)
+      expected-audience: users-service               # debe coincidir con el aud del ACCESS
+
+  m2m:
+    issuer: ${AUTH_ISSUER:http://localhost:8080}     # mismo issuer URL que emite Auth
+    audience: users-service                          # debe coincidir con el aud del M2M
+    required-scopes: users-service.read_auth         # scope exigido para endpoints internos
+  
+  services:
+    audit:
+      service-name: users-service
+      base-url: ${AUDIT_BASE_URL:http://audit:8080}
+      connect-timeout-ms: 1000
+      read-timeout-ms: 1500
+
+logging:
+  level:
+    "[com.lendora.audit]": DEBUG
