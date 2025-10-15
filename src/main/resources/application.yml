@@ -41,3 +41,15 @@ lendora:
       base-url: ${AUDIT_BASE_URL:http://audit:8080}
       connect-timeout-ms: 1000
       read-timeout-ms: 1500
+
+logging:
+  level:
+    com.lendora.audit.core.AuditPublisher: DEBUG   # logs del publisher (payload/endpoint)
+    com.lendora.audit: DEBUG                       # resto de la librería
+    org.springframework.web.client.RestTemplate: DEBUG  # request/response RestTemplate
+    org.springframework.http.client: DEBUG              # cabeceras y wire (SimpleClientHttpRequestFactory)
+    org.springframework.security: DEBUG                 # autorizaciones, filtros, 401/403
+    org.springframework.security.oauth2: DEBUG          # validación JWT (issuer/audience/scopes)
+    org.springframework.boot.autoconfigure.security: DEBUG
+    # opcional si quieres ver controllers:
+    com.lendora.users: DEBUG
