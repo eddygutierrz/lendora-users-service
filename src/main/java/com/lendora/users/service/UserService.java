@@ -19,4 +19,5 @@ public interface UserService {
     void changePassword(Long userId, ChangePasswordRequest req);
     UserDTO getById(Long userId);
     void markLogin(String username);
+    void delete(Long userId);
 }

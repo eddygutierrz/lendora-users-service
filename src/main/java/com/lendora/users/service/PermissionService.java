@@ -1,19 +1,23 @@
 package com.lendora.users.service;
 
+import com.lendora.audit.core.AuditSupport;
 import com.lendora.users.dto.*;
 import com.lendora.users.entity.Permission;
 import com.lendora.users.mapper.PermissionMapper;
 import com.lendora.users.repository.PermissionRepository;
 
-import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.lendora.common.exception.ResourceNotFoundException;
 
-@Service @RequiredArgsConstructor
+@Service 
 public class PermissionService {
-    private final PermissionRepository repo;
+    @Autowired PermissionRepository repo;
+    @Autowired AuditSupport audit;
 
     @Transactional
     public PermissionDTO create(PermissionDTO dto) {
@@ -21,7 +25,10 @@ public class PermissionService {
             throw new IllegalArgumentException("El código ya existe: " + dto.code());
         var p = new Permission();
         PermissionMapper.applyCreate(p, dto);
-        return PermissionMapper.toDTO(repo.save(p));
+        PermissionDTO permission = PermissionMapper.toDTO(repo.save(p));
+        audit.created("Permission", String.valueOf(permission.id()), PermissionDTO.class, permission);
+        //audit.created("User", String.valueOf(saved.getId()), User.class, saved);
+        return permission;
     }
 
     @Transactional(readOnly = true)
@@ -41,12 +48,17 @@ public class PermissionService {
     @Transactional
     public PermissionDTO update(Long id, PermissionDTO dto) {
         var p = repo.findById(id).orElseThrow();
+        PermissionDTO before = PermissionMapper.toDTO(p);
         PermissionMapper.applyUpdate(p, dto);
-        return PermissionMapper.toDTO(repo.save(p));
+        PermissionDTO after = PermissionMapper.toDTO(repo.save(p));
+        audit.updated("Permission", String.valueOf(id), PermissionDTO.class, before, after);
+        return after;
     }
 
     @Transactional
     public void delete(Long id) {
-        repo.deleteById(id);
+        Permission p = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Permission not found: " + id));
+        repo.delete(p);
+        audit.deleted("Permission", String.valueOf(id), PermissionDTO.class, PermissionMapper.toDTO(p));
     }
 }

@@ -167,4 +167,11 @@ public class UserServiceImpl implements UserService {
         repo.save(u);
     }
 
+    @Override
+    public void delete(Long userId) {
+        User entity = repo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + userId));
+        repo.delete(entity);
+        audit.deleted("User", String.valueOf(entity.getId()), UserDTO.class, UserMapper.toDTO(entity));
+    }
 }

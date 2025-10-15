@@ -59,4 +59,4 @@ lendora:
 
 logging:
   level:
-    "[com.lendora.audit]": DEBUG
+    com.lendora.audit: DEBUG
