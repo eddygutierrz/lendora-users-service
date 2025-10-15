@@ -22,6 +22,7 @@ import com.lendora.users.mapper.RoleMapper;
 import com.lendora.users.repository.PermissionRepository;
 import com.lendora.users.repository.RoleRepository;
 import com.lendora.common.exception.*;
+import com.lendora.audit.core.AuditSupport;
 
 
 @Service
@@ -29,6 +30,7 @@ import com.lendora.common.exception.*;
 public class RoleService {
     @Autowired private RoleRepository roles;
     @Autowired private PermissionRepository perms;
+    @Autowired private AuditSupport audit;
 
     @Transactional(readOnly = true)
     public Page<RoleDTO> list(String q, Pageable pageable) {
@@ -50,8 +52,7 @@ public class RoleService {
     public RoleDTO create(UpsertRoleRequest req) {
         validateReq(req, true);
 
-        if (roles.existsByCode(req.code()))
-            throw new ConflictException("La clave de rol ya existe: " + req.code());
+        if (roles.existsByCode(req.code())) throw new ConflictException("La clave de rol ya existe: " + req.code());
 
         Role r = new Role();
         r.setCode(req.code().trim());
@@ -62,6 +63,7 @@ public class RoleService {
         setPermissionsFromCodes(r, req.permissions());
 
         r = roles.save(r);
+        audit.created("Role",String.valueOf(r.getId()), RoleDTO.class, RoleMapper.toDTO(r));  
         return RoleMapper.toDTO(r);
     }
 
@@ -69,6 +71,7 @@ public class RoleService {
         validateReq(req, false);
 
         Role r = roles.findById(id).orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado: " + id));
+        RoleDTO before = RoleMapper.toDTO(r);
 
         // si cambia code, valida unicidad
         String newCode = req.code().trim();
@@ -83,12 +86,14 @@ public class RoleService {
         setPermissionsFromCodes(r, req.permissions());
 
         r = roles.save(r);
+        audit.updated("Role",String.valueOf(r.getId()), RoleDTO.class, before, RoleMapper.toDTO(r));
         return RoleMapper.toDTO(r);
     }
 
     public void delete(Long id) {
         Role r = roles.findById(id).orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado: " + id));
         roles.delete(r);
+        audit.deleted("Role",String.valueOf(r.getId()), RoleDTO.class, RoleMapper.toDTO(r));
     }
 
     // Helpers

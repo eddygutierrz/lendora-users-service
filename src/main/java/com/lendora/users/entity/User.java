@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.lendora.audit.api.AuditableFields;
 import com.lendora.users.enums.UserStatus;
 
 import jakarta.persistence.CollectionTable;
@@ -26,6 +27,10 @@ import lombok.Setter;
 @Entity
 @Table(name = "users")
 @Getter @Setter
+@AuditableFields({
+  "id", "username", "password", "status", "accessibleOffices", "office", "roles",
+  "firstname", "lastname", "email", "phone"
+})
 public class User {
 
   @Id
