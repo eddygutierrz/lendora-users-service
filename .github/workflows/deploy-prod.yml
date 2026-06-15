@@ -56,6 +56,31 @@ jobs:
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
+      # ─────────────────────────────────────────────────────────────────
+      # DIAGNÓSTICO temporal — confirma que el CI puede autenticarse
+      # contra GHCR Packages con los secrets del environment.
+      # Si el HTTP es 200 o 302  → creds OK; el bug es del settings.xml.
+      # Si el HTTP es 401        → el secret en CI no coincide con el
+      #                            PAT que probaste local con curl.
+      # Si imprime 'empty: yes'  → el secret no llegó al runner.
+      # Cuando todo pase, puedes eliminar este step.
+      # ─────────────────────────────────────────────────────────────────
+      - name: Diagnose GHCR auth from CI
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN:    ${{ secrets.GHCR_TOKEN }}
+        run: |
+          echo "username empty: $([ -z "$GHCR_USERNAME" ] && echo yes || echo no)"
+          echo "token    empty: $([ -z "$GHCR_TOKEN"    ] && echo yes || echo no)"
+          echo "username length: ${#GHCR_USERNAME}, token length: ${#GHCR_TOKEN}"
+          echo "settings.xml in disk:"
+          cat ~/.m2/settings.xml
+          echo "---"
+          echo "Curl directo a la dep que falla (no follow):"
+          curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+            -u "$GHCR_USERNAME:$GHCR_TOKEN" \
+            https://maven.pkg.github.com/eddygutierrz/lendora-common-spring/com/lendora/common-web/1.0.12/common-web-1.0.12.pom
+
       - name: Build JAR (skip tests — corren en CI separado)
         # OBLIGATORIO: Maven evalúa ${env.GHCR_USERNAME} / ${env.GHCR_TOKEN}
         # del settings.xml leyendo las env vars del PROCESO actual.
