@@ -27,21 +27,25 @@ import com.lendora.users.service.RoleService;
 @RestController
 @RequestMapping("/users/roles")
 public class RoleController {
-    @Autowired private RoleService service;
+    private final RoleService service;
 
-    @PreAuthorize("hasAuthority('roles.view')")
+    RoleController(RoleService service) {
+        this.service = service;
+    }
+
+    @PreAuthorize("hasAuthority('roles.read')")
     @GetMapping
     public Page<RoleDTO> list(@RequestParam(required = false) String q, Pageable pageable) {
         return service.list(q, pageable);
     }
 
-    @PreAuthorize("hasAuthority('roles.view')")
+    @PreAuthorize("hasAuthority('roles.read')")
     @GetMapping("/all")
     public java.util.List<RoleDTO> list() {
         return service.list();
     }
 
-    @PreAuthorize("hasAuthority('roles.view')")
+    @PreAuthorize("hasAuthority('roles.read')")
     @GetMapping("/{id}")
     public RoleDTO get(@PathVariable Long id) {
         return service.get(id);
@@ -54,7 +58,7 @@ public class RoleController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('roles.edit')")
+    @PreAuthorize("hasAuthority('roles.update')")
     public RoleDTO update(@PathVariable Long id, @RequestBody UpsertRoleRequest req) {
         return service.update(id, req);
     }
