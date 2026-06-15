@@ -22,21 +22,21 @@ public class PermissionController {
         return ResponseEntity.ok(service.create(dto));
     }
 
-    @PreAuthorize("hasAuthority('permissions.view')")
+    @PreAuthorize("hasAuthority('permissions.read')")
     @GetMapping
     public ResponseEntity<Page<PermissionDTO>> list(
             @RequestParam(required = false) String q, Pageable pageable) {
         return ResponseEntity.ok(service.list(q, pageable));
     }
 
-    @PreAuthorize("hasAuthority('permissions.view')")
+    @PreAuthorize("hasAuthority('permissions.read')")
     @GetMapping("/{id}")
     public ResponseEntity<PermissionDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(service.get(id));
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAuthority('permissions.edit')")
+    @PreAuthorize("hasAuthority('permissions.update')")
     public ResponseEntity<PermissionDTO> update(@PathVariable Long id,
                                                 @RequestBody @Valid PermissionDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));

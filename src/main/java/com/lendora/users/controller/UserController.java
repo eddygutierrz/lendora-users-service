@@ -50,26 +50,26 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('users.edit')")
+    @PreAuthorize("hasAuthority('users.update')")
     public ResponseEntity<UserDTO> update(@PathVariable Long id,
                                             @Validated @RequestBody UpsertUserRequest req) {
         return ResponseEntity.ok(service.update(id, req));
     }
 
     @GetMapping("/by-username/{username}")
-    @PreAuthorize("hasAuthority('users.view')")
+    @PreAuthorize("hasAuthority('users.read')")
     public ResponseEntity<UserDTO> getByUsername(@PathVariable String username) {
         return ResponseEntity.ok(service.getByUsername(username));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('users.view')")
+    @PreAuthorize("hasAuthority('users.read')")
     public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
     }
     
     @GetMapping
-    @PreAuthorize("hasAuthority('users.view')")
+    @PreAuthorize("hasAuthority('users.read')")
     public ResponseEntity<Page<UserDTO>> list(Pageable pageable) {
         return ResponseEntity.ok(service.list(pageable));
     }

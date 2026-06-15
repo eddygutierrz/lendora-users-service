@@ -1,92 +1,154 @@
-name: deploy-prod-users-service
+name: CI/CD — Build · QA · Prod
 
+# ─── Triggers ────────────────────────────────────────────────────────────────
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: {}
+  workflow_dispatch:
 
+# ─── Variables de imagen ─────────────────────────────────────────────────────
+env:
+  IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-users-service
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
 jobs:
-  build-and-deploy:
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # 1. BUILD — Compila JAR y publica imagen Docker en GHCR
+  # ══════════════════════════════════════════════════════════════════════════
+  build:
+    name: 🔨 Build & Push image
     runs-on: ubuntu-latest
-    environment: lendora-prod
-
-    env:
-      IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-users-service
-      TAG_LATEST: prod-latest
-      TAG_SHA: prod-${{ github.sha }}
-      GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
-
     permissions:
       contents: read
       packages: write
-      id-token: write
 
-    
+    outputs:
+      image_tag: ${{ steps.meta.outputs.sha_tag }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-      
-      - name: Export GHCR creds to env
-        run: |
-            echo "GHCR_USERNAME=${{ secrets.GHCR_USERNAME }}" >> $GITHUB_ENV
-            echo "GHCR_TOKEN=${{ secrets.GHCR_TOKEN }}" >> $GITHUB_ENV
-  
-      - name: Write custom Maven settings.xml (forces PAT use)
-        run: |
-            mkdir -p ~/.m2
-            cat > ~/.m2/settings.xml <<'EOF'
-            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-              <servers>
-                <server>
-                  <id>github</id>
-                  <username>${env.GHCR_USERNAME}</username>
-                  <password>${env.GHCR_TOKEN}</password>
-                </server>
-              </servers>
-            </settings>
-            EOF
-  
 
-      - name: Build JAR
+      - name: Write Maven settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${env.GHCR_USERNAME}</username>
+                <password>${env.GHCR_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build JAR (skip tests — corren en CI separado)
         run: mvn -s ~/.m2/settings.xml -B -DskipTests clean package
+
+      - name: Set image tags
+        id: meta
+        run: |
+          SHA_TAG="prod-${{ github.sha }}"
+          echo "sha_tag=${SHA_TAG}" >> $GITHUB_OUTPUT
 
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-      
-      - name: Build image (no provenance)
+
+      - name: Build Docker image
         env:
           DOCKER_BUILDKIT: "1"
         run: |
-          docker build --provenance=false -t $IMAGE_NAME:$TAG_SHA -t $IMAGE_NAME:$TAG_LATEST .
-      
+          docker build --provenance=false \
+            -t $IMAGE_NAME:${{ steps.meta.outputs.sha_tag }} \
+            -t $IMAGE_NAME:prod-latest \
+            .
+
       - name: Push image (with retry)
         run: |
           set -e
-          for t in "$IMAGE_NAME:$TAG_SHA" "$IMAGE_NAME:$TAG_LATEST"; do
+          for t in "$IMAGE_NAME:${{ steps.meta.outputs.sha_tag }}" "$IMAGE_NAME:prod-latest"; do
             for i in 1 2 3; do
               if docker push "$t"; then break; fi
               echo "retry $i for $t"; sleep 3
             done
           done
 
-      - name: Deploy on VPS (pull & up -d users)
+  # ══════════════════════════════════════════════════════════════════════════
+  # 2. DEPLOY PROD — Despliega en VPS de producción
+  #
+  # Este job arranca automático tras build exitoso, salvo que el entorno
+  # "lendora-prod" en GitHub tenga Required reviewers configurado.
+  #   Settings → Environments → lendora-prod → Required reviewers: [tu usuario]
+  #
+  # Topología en el VPS:
+  #   /opt/lendora/docker-compose.yml  +  /opt/lendora/.env
+  #   Project name = lendora (default del folder).
+  # ══════════════════════════════════════════════════════════════════════════
+  deploy-prod:
+    name: 🚀 Deploy → Prod (VPS)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: lendora-prod        # ← aquí configura Required reviewers en GitHub
+
+    steps:
+      - name: Deploy en VPS via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # ───────────────────────────────────────────────────────────
+          # Script de deploy con verificación de health.
+          #   set -euo pipefail → falla rápido en cualquier error
+          #   Pull, recrear container, esperar healthy (max ~120s).
+          #   Si no queda healthy, hace rollback al SHA anterior y
+          #   falla el workflow para que GitHub lo marque en rojo.
+          # ───────────────────────────────────────────────────────────
           script: |
+            set -euo pipefail
+
             docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" -p "${{ secrets.GHCR_TOKEN }}"
-            cd /opt/lendora/infra/compose
-            docker compose -f docker-compose.prod.yml --env-file .env.prod pull users
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d users
-            docker compose -f docker-compose.prod.yml --env-file .env.prod ps users
+            cd /opt/lendora
+
+            # Guarda imagen actual antes del pull (para rollback)
+            PREV_IMG=$(docker inspect --format='{{.Config.Image}}' lendora-users 2>/dev/null || echo "")
+            echo "Imagen previa: ${PREV_IMG:-<none>}"
+
+            docker compose pull users
+            docker compose up -d users
+
+            # Esperar a que users quede healthy
+            echo "Esperando healthy de users..."
+            for i in $(seq 1 24); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' lendora-users 2>/dev/null || echo "no-health")
+              echo "  intento $i: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                echo "✅ users healthy — deploy OK (image: ${{ needs.build.outputs.image_tag }})"
+                docker compose ps users
+                exit 0
+              fi
+              sleep 5
+            done
+
+            echo "❌ users NO quedó healthy en 2 min — rollback"
+            docker compose logs --tail=80 users
+            if [ -n "$PREV_IMG" ]; then
+              echo "Rollback a $PREV_IMG"
+              docker tag "$PREV_IMG" ghcr.io/${{ secrets.GHCR_USERNAME }}/lendora-users-service:prod-latest
+              docker compose up -d users
+            fi
+            exit 1
