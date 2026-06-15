@@ -57,6 +57,13 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
       - name: Build JAR (skip tests — corren en CI separado)
+        # OBLIGATORIO: Maven evalúa ${env.GHCR_USERNAME} / ${env.GHCR_TOKEN}
+        # del settings.xml leyendo las env vars del PROCESO actual.
+        # Sin este bloque env: las creds quedan vacías → 401 al pull desde
+        # maven.pkg.github.com (aunque el PAT sea válido).
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: mvn -s ~/.m2/settings.xml -B -DskipTests clean package
 
       - name: Set image tags
