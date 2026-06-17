@@ -1,6 +1,7 @@
 package com.lendora.users.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import com.lendora.users.entity.Permission;
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
     boolean existsByCodeIgnoreCase(String code);
+    Optional<Permission> findByCode(String code);
     Page<Permission> findByCodeContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
             String code, String desc, Pageable pageable);
     List<Permission> findByCodeIn(Set<String> codes);
