@@ -16,17 +16,20 @@ import lombok.RequiredArgsConstructor;
  * Endpoints del grafo de dependencias entre permisos.
  *
  * <pre>
- * GET    /permissions/dependencies          — devuelve el grafo agregado (roles.read)
- * POST   /permissions/dependencies          — crea una dependencia (roles.update)
- * DELETE /permissions/dependencies/{id}     — elimina una dependencia (roles.update)
+ * GET    /users/permissions/dependencies          — devuelve el grafo agregado (roles.read)
+ * POST   /users/permissions/dependencies          — crea una dependencia (roles.update)
+ * DELETE /users/permissions/dependencies/{id}     — elimina una dependencia (roles.update)
  * </pre>
+ *
+ * Prefijo `/users/...` consistente con el resto de controllers del MS
+ * (PermissionController, RoleController, MenuController).
  *
  * Diseño: el grafo lo gobierna users-service (dueño único). Cada MS que
  * agregue permisos nuevos documenta sus dependencias en su README; el seed
  * vive en users-service.
  */
 @RestController
-@RequestMapping("/permissions/dependencies")
+@RequestMapping("/users/permissions/dependencies")
 @RequiredArgsConstructor
 public class PermissionDependencyController {
 
